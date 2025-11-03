@@ -1,5 +1,7 @@
+import type { DragEvent as ReactDragEvent } from 'react';
+
 export default function Sidebar() {
-  const onDragStart = (event, nodeType) => {
+  const onDragStart = (event: ReactDragEvent<HTMLElement>, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };

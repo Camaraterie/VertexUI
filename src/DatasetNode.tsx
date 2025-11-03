@@ -1,6 +1,8 @@
 import { Handle, Position } from 'reactflow';
 
-export default function DatasetNode({ data }) {
+type DatasetData = { label: string }
+
+export default function DatasetNode({ data }: { data: DatasetData }) {
   return (
     <div className="w-64 rounded-xl bg-[#2E333A] border border-[#3a4049] shadow-lg">
       <div className="flex items-center justify-between p-3 border-b border-[#3a4049]">
