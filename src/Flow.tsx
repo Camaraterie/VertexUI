@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { z } from 'zod';
 import type { DragEvent as ReactDragEvent } from 'react';
 import ReactFlow, {
   MiniMap,
@@ -38,13 +39,39 @@ export default function Flow() {
   const reactFlowInstance = useReactFlow();
 
   useEffect(() => {
+    const NodeItemSchema = z.object({
+      id: z.string(),
+      type: z.string().optional(),
+      position: z.object({ x: z.number(), y: z.number() }).optional(),
+      data: z.object({ label: z.string().optional() }).optional(),
+    }).passthrough();
+
+    const EdgeItemSchema = z.object({
+      id: z.string(),
+      source: z.string().optional(),
+      target: z.string().optional(),
+    }).passthrough();
+
     const handleMessage = (event: MessageEvent<unknown>) => {
-      const d = event.data as { type?: string; payload?: unknown };
-      if (d.type === 'UPDATE_NODES' && Array.isArray(d.payload)) {
-        setNodes(d.payload as Node<{ label: string }>[]);
-      }
-      if (d.type === 'UPDATE_EDGES' && Array.isArray(d.payload)) {
-        setEdges(d.payload as Edge[]);
+      const parsed = z.object({ type: z.string(), payload: z.unknown() }).safeParse(event.data as unknown);
+      if (!parsed.success) return;
+
+      const { type, payload } = parsed.data;
+      if (type === 'UPDATE_NODES') {
+        const nodesParse = z.array(NodeItemSchema).safeParse(payload);
+        if (nodesParse.success) {
+          setNodes(nodesParse.data as Node<{ label: string }>[]);
+        } else {
+          // invalid payload; ignore or log
+          console.warn('Invalid UPDATE_NODES payload received via postMessage', payload);
+        }
+      } else if (type === 'UPDATE_EDGES') {
+        const edgesParse = z.array(EdgeItemSchema).safeParse(payload);
+        if (edgesParse.success) {
+          setEdges(edgesParse.data as Edge[]);
+        } else {
+          console.warn('Invalid UPDATE_EDGES payload received via postMessage', payload);
+        }
       }
     };
 
