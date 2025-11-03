@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Handle, Position, useNodes, useEdges } from 'reactflow';
 
-export default function GroupNode({ id, data }) {
+type GroupData = { label: string }
+
+export default function GroupNode({ id, data }: { id: string; data: GroupData }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const nodes = useNodes();
   const edges = useEdges();
