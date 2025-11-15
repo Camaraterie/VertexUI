@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Handle, Position, useNodes, useEdges } from 'reactflow';
+import { useWorkflow } from './WorkflowContext';
 
 type GroupData = { label: string }
 
@@ -7,6 +8,7 @@ export default function GroupNode({ id, data }: { id: string; data: GroupData })
   const [isCollapsed, setIsCollapsed] = useState(false);
   const nodes = useNodes();
   const edges = useEdges();
+  const { setNodes, setEdges } = useWorkflow();
 
   const handleCollapse = () => {
     const childNodes = nodes.filter((node) => node.parentNode === id);
@@ -26,9 +28,9 @@ export default function GroupNode({ id, data }: { id: string; data: GroupData })
       return edge;
     });
 
-    // This is a workaround to update the nodes and edges in the parent component
-    window.postMessage({ type: 'UPDATE_NODES', payload: updatedNodes }, '*');
-    window.postMessage({ type: 'UPDATE_EDGES', payload: updatedEdges }, '*');
+    // Update nodes and edges using proper state management
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
 
     setIsCollapsed(!isCollapsed);
   };
