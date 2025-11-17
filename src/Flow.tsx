@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { z } from 'zod';
 import type { DragEvent as ReactDragEvent } from 'react';
 import ReactFlow, {
@@ -15,6 +15,7 @@ import 'reactflow/dist/style.css';
 import GroupNode from './GroupNode';
 import DatasetNode from './DatasetNode';
 import PromptNode from './PromptNode';
+import { useWorkflow } from './WorkflowContext';
 
 
 const initialNodes: Node<{ label: string }>[] = [
@@ -34,9 +35,17 @@ const nodeTypes = {
 };
 
 export default function Flow() {
-  const [nodes, setNodes] = useState<Node<{ label: string }>[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const { nodes, setNodes, edges, setEdges } = useWorkflow();
   const reactFlowInstance = useReactFlow();
+
+  // Initialize with default nodes if empty
+  useEffect(() => {
+    if (nodes.length === 0) {
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const NodeItemSchema = z.object({
@@ -80,19 +89,29 @@ export default function Flow() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
+    (changes: NodeChange[]) => {
+      const updatedNodes = applyNodeChanges(changes, nodes);
+      setNodes(updatedNodes);
+    },
+    [nodes, setNodes]
   );
   const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
+    (changes: EdgeChange[]) => {
+      const updatedEdges = applyEdgeChanges(changes, edges);
+      setEdges(updatedEdges);
+    },
+    [edges, setEdges]
   );
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
+    (connection: Connection) => {
+      const updatedEdges = addEdge(connection, edges);
+      setEdges(updatedEdges);
+    },
+    [edges, setEdges]
   );
 
   const onDragOver = useCallback((event: ReactDragEvent<HTMLDivElement>) => {
@@ -162,7 +181,7 @@ export default function Flow() {
             extent: 'parent',
           },
         ];
-        setNodes((nds) => nds.concat(newNodes as Node<{ label: string }>[]));
+        setNodes([...nodes, ...(newNodes as Node<{ label: string }>[])]);
       } else {
         const newNode = {
           id: getId(),
@@ -171,10 +190,10 @@ export default function Flow() {
           data: { label: `${type} node` },
         };
 
-        setNodes((nds) => nds.concat(newNode as Node<{ label: string }>));
+        setNodes([...nodes, newNode as Node<{ label: string }>]);
       }
     },
-    [reactFlowInstance]
+    [reactFlowInstance, nodes, setNodes]
   );
 
   return (
