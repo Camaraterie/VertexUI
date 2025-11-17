@@ -5,11 +5,3 @@ node_modules
 .env
 .env.local
 .DS_Store
-*.md
-!README.md
-src
-public
-tsconfig*.json
-vite.config.ts
-tailwind.config.js
-eslint.config.js
